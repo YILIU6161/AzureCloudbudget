@@ -134,7 +134,6 @@ class EmailSender:
                             <th>资源名称</th>
                             <th>资源类型</th>
                             <th>成本 (USD)</th>
-                            <th>创建者</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -147,7 +146,6 @@ class EmailSender:
                             <td class="resource-name">{resource.get('resource_name', 'N/A')}</td>
                             <td>{resource.get('resource_type', 'N/A')}</td>
                             <td>${resource.get('cost', 0):.2f}</td>
-                            <td>{resource.get('creator', 'Unknown')}</td>
                         </tr>
             """
         
@@ -186,7 +184,6 @@ Azure 成本告警
 {idx}. {resource.get('resource_name', 'N/A')}
    资源类型: {resource.get('resource_type', 'N/A')}
    成本: ${resource.get('cost', 0):.2f}
-   创建者: {resource.get('creator', 'Unknown')}
 """
         
         text += "\n此邮件由 Azure 成本监控系统自动发送"
