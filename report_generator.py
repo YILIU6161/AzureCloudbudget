@@ -1,4 +1,4 @@
-"""月度成本报告生成器"""
+"""Monthly cost report generator"""
 from datetime import datetime
 from typing import Dict, List
 from email_sender import EmailSender
@@ -6,41 +6,41 @@ import config
 
 
 class ReportGenerator:
-    """月度成本报告生成器"""
+    """Monthly cost report generator"""
     
     def __init__(self):
         self.email_sender = EmailSender()
     
     def generate_monthly_report(self, creator_summary: Dict[str, Dict], month: str) -> bool:
-        """生成并发送月度成本报告
+        """Generate and send monthly cost report
         
         Args:
-            creator_summary: 按创建者汇总的成本数据
-            month: 月份字符串，如 "2024-01"
+            creator_summary: Cost data aggregated by creator
+            month: Month string, e.g., "2024-01"
         
         Returns:
-            bool: 是否发送成功
+            bool: Whether sending was successful
         """
         if not creator_summary:
-            print("没有成本数据，跳过报告生成")
+            print("No cost data, skipping report generation")
             return False
         
-        # 按总成本排序
+        # Sort by total cost
         sorted_creators = sorted(
             creator_summary.items(),
             key=lambda x: x[1]['total_cost'],
             reverse=True
         )
         
-        # 计算总成本
+        # Calculate total cost
         total_monthly_cost = sum(data['total_cost'] for data in creator_summary.values())
         
-        # 生成报告
+        # Generate report
         html_report = self._build_html_report(sorted_creators, month, total_monthly_cost)
         text_report = self._build_text_report(sorted_creators, month, total_monthly_cost)
         
-        # 发送邮件
-        subject = f"Azure 月度成本报告 - {month}"
+        # Send email
+        subject = f"Azure Monthly Cost Report - {month}"
         
         try:
             from email.mime.text import MIMEText
@@ -63,14 +63,14 @@ class ReportGenerator:
                 server.login(config.Config.SMTP_USERNAME, config.Config.SMTP_PASSWORD)
                 server.send_message(msg)
             
-            print(f"✅ 月度报告已成功发送到 {config.Config.ALERT_EMAIL_TO}")
+            print(f"✅ Monthly report successfully sent to {config.Config.ALERT_EMAIL_TO}")
             return True
         except Exception as e:
-            print(f"❌ 发送月度报告失败: {e}")
+            print(f"❌ Failed to send monthly report: {e}")
             return False
     
     def _build_html_report(self, sorted_creators: List, month: str, total_cost: float) -> str:
-        """构建 HTML 格式的报告"""
+        """Build HTML format report"""
         html = f"""
         <!DOCTYPE html>
         <html>
@@ -140,26 +140,26 @@ class ReportGenerator:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>Azure 月度成本报告</h1>
-                    <p>报告月份: <strong>{month}</strong></p>
+                    <h1>Azure Monthly Cost Report</h1>
+                    <p>Report Month: <strong>{month}</strong></p>
                 </div>
                 
                 <div class="summary-box">
-                    <h2>成本摘要</h2>
-                    <p>总成本: <span class="total-cost">${total_cost:.2f}</span></p>
-                    <p>创建者数量: <strong>{len(sorted_creators)}</strong></p>
+                    <h2>Cost Summary</h2>
+                    <p>Total Cost: <span class="total-cost">${total_cost:.2f}</span></p>
+                    <p>Number of Creators: <strong>{len(sorted_creators)}</strong></p>
                 </div>
                 
-                <h2>按创建者排序的成本明细</h2>
+                <h2>Cost Details Sorted by Creator</h2>
                 <table>
                     <thead>
                         <tr>
-                            <th>排名</th>
-                            <th>创建者</th>
-                            <th>总成本 (USD)</th>
-                            <th>资源数量</th>
-                            <th>占比</th>
-                            <th>主要资源</th>
+                            <th>Rank</th>
+                            <th>Creator</th>
+                            <th>Total Cost (USD)</th>
+                            <th>Resource Count</th>
+                            <th>Percentage</th>
+                            <th>Main Resources</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -167,10 +167,10 @@ class ReportGenerator:
         
         for idx, (creator, data) in enumerate(sorted_creators, 1):
             percentage = (data['total_cost'] / total_cost * 100) if total_cost > 0 else 0
-            top_resources = data['resources'][:5]  # 显示前5个资源
+            top_resources = data['resources'][:5]  # Show top 5 resources
             resource_list = ", ".join([f"{r['resource_name']} (${r['cost']:.2f})" for r in top_resources])
             if len(data['resources']) > 5:
-                resource_list += f" ... 等共 {data['resource_count']} 个资源"
+                resource_list += f" ... and {data['resource_count']} resources in total"
             
             html += f"""
                         <tr>
@@ -187,19 +187,19 @@ class ReportGenerator:
                     </tbody>
                 </table>
                 
-                <h2>详细资源列表</h2>
+                <h2>Detailed Resource List</h2>
         """
         
-        # 为每个创建者添加详细资源列表
+        # Add detailed resource list for each creator
         for creator, data in sorted_creators:
             html += f"""
-                <h3>{creator} - 资源明细</h3>
+                <h3>{creator} - Resource Details</h3>
                 <table>
                     <thead>
                         <tr>
-                            <th>资源名称</th>
-                            <th>资源类型</th>
-                            <th>成本 (USD)</th>
+                            <th>Resource Name</th>
+                            <th>Resource Type</th>
+                            <th>Cost (USD)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -221,7 +221,7 @@ class ReportGenerator:
         
         html += """
                 <p style="margin-top: 20px; color: #666; font-size: 12px;">
-                    此报告由 Azure 成本监控系统自动生成
+                    This report was automatically generated by Azure Cost Monitoring System
                 </p>
             </div>
         </body>
@@ -231,35 +231,35 @@ class ReportGenerator:
         return html
     
     def _build_text_report(self, sorted_creators: List, month: str, total_cost: float) -> str:
-        """构建纯文本格式的报告"""
+        """Build plain text format report"""
         text = f"""
-Azure 月度成本报告
-==================
+Azure Monthly Cost Report
+=========================
 
-报告月份: {month}
-总成本: ${total_cost:.2f}
-创建者数量: {len(sorted_creators)}
+Report Month: {month}
+Total Cost: ${total_cost:.2f}
+Number of Creators: {len(sorted_creators)}
 
-按创建者排序的成本明细:
+Cost Details Sorted by Creator:
 """
         
         for idx, (creator, data) in enumerate(sorted_creators, 1):
             percentage = (data['total_cost'] / total_cost * 100) if total_cost > 0 else 0
             text += f"""
 {idx}. {creator}
-   总成本: ${data['total_cost']:.2f}
-   资源数量: {data['resource_count']}
-   占比: {percentage:.1f}%
+   Total Cost: ${data['total_cost']:.2f}
+   Resource Count: {data['resource_count']}
+   Percentage: {percentage:.1f}%
    
-   主要资源:
+   Main Resources:
 """
-            for resource in data['resources'][:10]:  # 显示前10个资源
+            for resource in data['resources'][:10]:  # Show top 10 resources
                 text += f"   - {resource.get('resource_name', 'N/A')} ({resource.get('resource_type', 'N/A')}): ${resource.get('cost', 0):.2f}\n"
             
             if len(data['resources']) > 10:
-                text += f"   ... 还有 {len(data['resources']) - 10} 个资源\n"
+                text += f"   ... and {len(data['resources']) - 10} more resources\n"
         
-        text += "\n此报告由 Azure 成本监控系统自动生成"
+        text += "\nThis report was automatically generated by Azure Cost Monitoring System"
         
         return text
 

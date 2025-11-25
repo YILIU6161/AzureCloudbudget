@@ -1,185 +1,185 @@
-# Azure 成本监控告警系统
+# Azure Cost Monitoring and Alerting System
 
-这是一个自动监控 Azure 订阅成本的程序，当成本超过设定阈值时，会自动发送邮件告警，并在邮件中展示花费前5的资源。同时支持每月生成按创建者汇总的月度成本报告。
+This is an automated Azure subscription cost monitoring program that sends email alerts when costs exceed a set threshold and displays the top 5 resources in the email. It also supports generating monthly cost reports aggregated by creator.
 
-## 功能特性
+## Features
 
-- ✅ 每天自动检查前一天的 Azure 订阅成本
-- ✅ 当成本超过阈值时发送邮件告警
-- ✅ 在邮件中展示花费前5的资源
-- ✅ **每月1号自动生成月度成本报告**，按创建者汇总并排序
-- ✅ 支持定时任务和手动执行
+- ✅ Automatically checks the previous day's Azure subscription cost daily
+- ✅ Sends email alerts when cost exceeds threshold
+- ✅ Displays top 5 resources in email
+- ✅ **Automatically generates monthly cost reports on the 1st of each month**, aggregated and sorted by creator
+- ✅ Supports scheduled tasks and manual execution
 
-## 环境要求
+## Requirements
 
 - Python 3.7+
-- Azure 订阅
-- Azure Service Principal（用于 API 访问）
-- SMTP 邮件服务器（如 Gmail、Outlook 等）
+- Azure subscription
+- Azure Service Principal (for API access)
+- SMTP email server (e.g., Gmail, Outlook, etc.)
 
-## 安装步骤
+## Installation
 
-### 1. 克隆或下载项目
+### 1. Clone or download the project
 
 ```bash
 cd /Users/liuyi/Cursortest
 ```
 
-### 2. 安装依赖
+### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. 配置 Azure Service Principal
+### 3. Configure Azure Service Principal
 
-在 Azure Portal 中创建 Service Principal：
+Create a Service Principal in Azure Portal:
 
-1. 进入 Azure Active Directory > App registrations
-2. 点击 "New registration"
-3. 创建应用后，进入 "Certificates & secrets"
-4. 创建新的客户端密钥
-5. 记录以下信息：
+1. Go to Azure Active Directory > App registrations
+2. Click "New registration"
+3. After creating the app, go to "Certificates & secrets"
+4. Create a new client secret
+5. Record the following information:
    - Tenant ID
    - Application (client) ID
    - Client secret value
 
-### 4. 授予权限
+### 4. Grant permissions
 
-Service Principal 需要以下权限：
-- **Cost Management Reader** 角色（在订阅级别）
-- **Reader** 角色（用于读取资源标签）
+The Service Principal needs the following permissions:
+- **Cost Management Reader** role (at subscription level)
+- **Reader** role (for reading resource tags)
 
-在 Azure Portal 中：
-1. 进入 Subscriptions > 你的订阅 > Access control (IAM)
-2. 添加角色分配，选择你的 Service Principal
-3. 分配 "Cost Management Reader" 和 "Reader" 角色
+In Azure Portal:
+1. Go to Subscriptions > Your subscription > Access control (IAM)
+2. Add role assignment, select your Service Principal
+3. Assign "Cost Management Reader" and "Reader" roles
 
-### 5. 配置环境变量
+### 5. Configure environment variables
 
-创建 `.env` 文件（参考下面的配置示例）：
+Create a `.env` file (refer to the configuration example below):
 
 ```bash
-# Azure 配置
+# Azure configuration
 AZURE_TENANT_ID=your_tenant_id
 AZURE_CLIENT_ID=your_client_id
 AZURE_CLIENT_SECRET=your_client_secret
 AZURE_SUBSCRIPTION_ID=your_subscription_id
 
-# 邮件配置
+# Email configuration
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your_email@gmail.com
 SMTP_PASSWORD=your_app_password
 ALERT_EMAIL_TO=alert@example.com
 
-# 成本阈值配置（美元）
+# Cost threshold configuration (USD)
 COST_THRESHOLD=100.0
 ```
 
-#### Gmail 配置说明
+#### Gmail configuration
 
-如果使用 Gmail：
-1. 启用两步验证
-2. 生成应用专用密码：Google Account > Security > App passwords
-3. 使用应用专用密码作为 `SMTP_PASSWORD`
+If using Gmail:
+1. Enable two-factor authentication
+2. Generate app password: Google Account > Security > App passwords
+3. Use the app password as `SMTP_PASSWORD`
 
-#### 其他邮件服务商
+#### Other email providers
 
-- **Outlook/Hotmail**: `smtp-mail.outlook.com`, 端口 587
-- **QQ邮箱**: `smtp.qq.com`, 端口 587
-- **163邮箱**: `smtp.163.com`, 端口 25 或 465
+- **Outlook/Hotmail**: `smtp-mail.outlook.com`, port 587
+- **QQ Mail**: `smtp.qq.com`, port 587
+- **163 Mail**: `smtp.163.com`, port 25 or 465
 
-## 使用方法
+## Usage
 
-### 测试运行
+### Test run
 
-#### 立即执行一次日常检查
+#### Run daily check immediately
 
 ```bash
 python main.py --once
 ```
 
-这将立即检查前一天的成本并发送告警（如果超过阈值）。
+This will immediately check the previous day's cost and send an alert (if threshold is exceeded).
 
-#### 立即生成月度报告
+#### Generate monthly report immediately
 
 ```bash
 python main.py --monthly
 ```
 
-这将立即生成上个月的月度成本报告并发送邮件。
+This will immediately generate the previous month's monthly cost report and send an email.
 
-### 定时运行（自动执行）
+### Scheduled run (automatic execution)
 
 ```bash
 python main.py
 ```
 
-程序将按计划自动执行：
-- **每天 09:00**：执行日常成本检查
-- **每月 1号 10:00**：生成上个月的月度成本报告
+The program will automatically execute on schedule:
+- **Daily at 09:00**: Execute daily cost check
+- **1st of each month at 10:00**: Generate previous month's monthly cost report
 
-按 `Ctrl+C` 停止服务。
+Press `Ctrl+C` to stop the service.
 
-### 使用系统定时任务（推荐）
+### Using system scheduled tasks (recommended)
 
-对于生产环境，建议使用系统的 cron（Linux/Mac）或任务计划程序（Windows）：
+For production environments, it's recommended to use system cron (Linux/Mac) or Task Scheduler (Windows):
 
 #### Linux/Mac (cron)
 
 ```bash
-# 编辑 crontab
+# Edit crontab
 crontab -e
 
-# 添加以下行（每天上午9点执行日常检查，每月1号10点执行月度报告）
+# Add the following lines (daily check at 9 AM, monthly report on 1st at 10 AM)
 0 9 * * * cd /Users/liuyi/Cursortest && /usr/bin/python3 main.py --once
 0 10 1 * * cd /Users/liuyi/Cursortest && /usr/bin/python3 main.py --monthly
 ```
 
-#### Windows (任务计划程序)
+#### Windows (Task Scheduler)
 
-1. 打开任务计划程序
-2. 创建基本任务
-3. 设置触发器为每天 09:00
-4. 操作：启动程序
-   - 程序：`python.exe`
-   - 参数：`main.py --once`
-   - 起始于：项目目录路径
+1. Open Task Scheduler
+2. Create basic task
+3. Set trigger to daily at 09:00
+4. Action: Start program
+   - Program: `python.exe`
+   - Arguments: `main.py --once`
+   - Start in: Project directory path
 
-## 告警格式
+## Alert Format
 
-### 邮件格式
+### Email format
 
-### 日常告警邮件
+### Daily alert email
 
-告警邮件包含以下信息：
+Alert emails contain the following information:
 
-- **成本摘要**：总成本、阈值、超出金额
-- **花费前5的资源**：
-  - 资源名称
-  - 资源类型
-  - 成本（USD）
+- **Cost summary**: Total cost, threshold, exceeded amount
+- **Top 5 resources**:
+  - Resource name
+  - Resource type
+  - Cost (USD)
 
-### 月度成本报告
+### Monthly cost report
 
-月度报告（每月1号发送）包含以下信息：
+Monthly reports (sent on the 1st of each month) contain the following information:
 
-- **成本摘要**：上个月总成本、创建者数量
-- **按创建者排序的成本明细表**：
-  - 排名
-  - 创建者
-  - 总成本（USD）
-  - 资源数量
-  - 占比
-  - 主要资源列表
-- **详细资源列表**：每个创建者的所有资源明细
+- **Cost summary**: Previous month's total cost, number of creators
+- **Cost details sorted by creator**:
+  - Rank
+  - Creator
+  - Total cost (USD)
+  - Number of resources
+  - Percentage
+  - Main resource list
+- **Detailed resource list**: All resource details for each creator
 
-## 资源创建者标签
+## Resource creator tags
 
-**注意**：月度报告需要按创建者汇总成本，因此需要在资源上添加创建者标签。
+**Note**: Monthly reports need to aggregate costs by creator, so creator tags need to be added to resources.
 
-程序会从 Azure 资源的标签中查找创建者信息用于月度报告汇总。支持的标签键：
+The program retrieves creator information from Azure resource tags for monthly report aggregation. Supported tag keys:
 
 - `CreatedBy`
 - `createdBy`
@@ -188,60 +188,60 @@ crontab -e
 - `Creator`
 - `creator`
 
-建议在创建资源时添加这些标签，例如：
+It's recommended to add these tags when creating resources, for example:
 
 ```bash
 az resource tag --tags CreatedBy=john.doe@example.com --ids /subscriptions/.../resourceGroups/.../providers/...
 ```
 
-## 故障排除
+## Troubleshooting
 
-### 1. 认证失败
+### 1. Authentication failure
 
-- 检查 Service Principal 的凭据是否正确
-- 确认 Service Principal 有足够的权限
+- Check if Service Principal credentials are correct
+- Verify Service Principal has sufficient permissions
 
-### 2. 无法获取成本数据
+### 2. Unable to retrieve cost data
 
-- 确认订阅 ID 正确
-- 检查是否有 "Cost Management Reader" 角色
-- 注意：成本数据可能有延迟（通常几小时）
+- Verify subscription ID is correct
+- Check if "Cost Management Reader" role is assigned
+- Note: Cost data may have delays (usually a few hours)
 
-### 3. 邮件发送失败
+### 3. Email sending failure
 
-- 检查 SMTP 配置是否正确
-- 对于 Gmail，确保使用应用专用密码
-- 检查防火墙是否阻止 SMTP 端口
+- Check if SMTP configuration is correct
+- For Gmail, ensure app password is used
+- Check if firewall is blocking SMTP port
 
-### 4. 月度报告无法按创建者汇总
+### 4. Monthly report unable to aggregate by creator
 
-- 确认 Service Principal 有 "Reader" 角色
-- 检查资源是否有相应的创建者标签
-- 某些资源类型可能不支持标签
-- 没有标签的资源会被归类为 "Unknown"
+- Verify Service Principal has "Reader" role
+- Check if resources have corresponding creator tags
+- Some resource types may not support tags
+- Resources without tags will be categorized as "Unknown"
 
-## 项目结构
+## Project structure
 
 ```
 .
-├── main.py                  # 主程序入口
-├── config.py                # 配置管理
-├── azure_cost_client.py     # Azure 成本查询客户端
-├── email_sender.py          # 邮件发送模块
-├── report_generator.py      # 月度报告生成器
-├── requirements.txt         # Python 依赖
-├── .env                     # 环境变量（需要创建）
-├── env.example              # 环境变量配置示例
-├── .gitignore              # Git 忽略文件
-└── README.md               # 本文档
+├── main.py                  # Main program entry
+├── config.py                # Configuration management
+├── azure_cost_client.py     # Azure cost query client
+├── email_sender.py          # Email sending module
+├── report_generator.py       # Monthly report generator
+├── requirements.txt         # Python dependencies
+├── .env                     # Environment variables (needs to be created)
+├── env.example              # Environment variable configuration example
+├── .gitignore              # Git ignore file
+└── README.md               # This document
 ```
 
-## 许可证
+## License
 
 MIT License
 
-## 贡献
+## Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
 
 # AzureCloudbudget
