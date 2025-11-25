@@ -1,4 +1,4 @@
-"""Azure 成本监控主程序"""
+"""Azure cost monitoring main program"""
 import schedule
 import time
 from datetime import datetime
@@ -9,28 +9,28 @@ from report_generator import ReportGenerator
 
 
 def check_cost_and_alert():
-    """检查成本并发送告警"""
-    print(f"[{datetime.now()}] 开始检查 Azure 成本...")
+    """Check cost and send alert"""
+    print(f"[{datetime.now()}] Starting Azure cost check...")
     
     try:
-        # 初始化客户端
+        # Initialize clients
         cost_client = AzureCostClient()
         email_sender = EmailSender()
         
-        # 获取前一天的总体成本
+        # Get previous day's total cost
         total_cost = cost_client.get_yesterday_cost()
-        print(f"前一天总成本: ${total_cost:.2f}")
+        print(f"Previous day total cost: ${total_cost:.2f}")
         
-        # 检查是否超过阈值
+        # Check if threshold is exceeded
         threshold = config.Config.COST_THRESHOLD
         if total_cost > threshold:
-            print(f"⚠️ 成本 ${total_cost:.2f} 超过阈值 ${threshold:.2f}，准备发送告警...")
+            print(f"⚠️ Cost ${total_cost:.2f} exceeded threshold ${threshold:.2f}, preparing to send alert...")
             
-            # 获取花费前5的资源
-            print("正在获取花费前5的资源信息...")
+            # Get top 5 resources by cost
+            print("Retrieving top 5 resources information...")
             top_resources = cost_client.get_detailed_cost_by_resource()
             
-            # 发送告警邮件
+            # Send alert email
             success = email_sender.send_cost_alert(
                 total_cost=total_cost,
                 threshold=threshold,
@@ -38,111 +38,110 @@ def check_cost_and_alert():
             )
             
             if success:
-                print("✅ 告警邮件发送成功")
+                print("✅ Alert email sent successfully")
             else:
-                print("❌ 告警邮件发送失败")
+                print("❌ Failed to send alert email")
         else:
-            print(f"✅ 成本 ${total_cost:.2f} 在阈值 ${threshold:.2f} 以内，无需告警")
+            print(f"✅ Cost ${total_cost:.2f} is within threshold ${threshold:.2f}, no alert needed")
     
     except Exception as e:
-        print(f"❌ 检查成本时发生错误: {e}")
+        print(f"❌ Error occurred while checking cost: {e}")
         import traceback
         traceback.print_exc()
 
 
 def run_once():
-    """立即运行一次检查（用于测试）"""
+    """Run check once immediately (for testing)"""
     check_cost_and_alert()
 
 
 def check_monthly_report():
-    """检查并生成月度报告"""
-    print(f"[{datetime.now()}] 开始生成月度成本报告...")
+    """Check and generate monthly report"""
+    print(f"[{datetime.now()}] Starting monthly cost report generation...")
     
     try:
         cost_client = AzureCostClient()
         report_generator = ReportGenerator()
         
-        # 获取上个月的成本数据
+        # Get last month's cost data
         creator_summary = cost_client.get_last_month_cost_by_creator()
         
         if not creator_summary:
-            print("没有成本数据，跳过报告生成")
+            print("No cost data, skipping report generation")
             return
         
-        # 生成月份字符串
+        # Generate month string
         today = datetime.now()
         if today.month == 1:
             last_month = f"{today.year - 1}-12"
         else:
             last_month = f"{today.year}-{today.month - 1:02d}"
         
-        # 生成并发送报告
+        # Generate and send report
         success = report_generator.generate_monthly_report(creator_summary, last_month)
         
         if success:
-            print("✅ 月度报告生成并发送成功")
+            print("✅ Monthly report generated and sent successfully")
         else:
-            print("❌ 月度报告生成或发送失败")
+            print("❌ Failed to generate or send monthly report")
     
     except Exception as e:
-        print(f"❌ 生成月度报告时发生错误: {e}")
+        print(f"❌ Error occurred while generating monthly report: {e}")
         import traceback
         traceback.print_exc()
 
 
 def run_scheduled():
-    """按计划运行（每天执行）"""
-    # 每天上午9点执行日常检查
+    """Run on schedule (daily execution)"""
+    # Execute daily check at 9 AM
     schedule.every().day.at("09:00").do(check_cost_and_alert)
     
-    # 每月1号上午10点执行月度报告
-    # schedule 库不支持每月执行，使用每天检查日期的方式
+    # Execute monthly report on 1st of each month at 10 AM
+    # schedule library doesn't support monthly execution, use daily date check instead
     def check_and_run_monthly():
         today = datetime.now()
-        if today.day == 1:  # 每月1号
+        if today.day == 1:  # 1st of each month
             check_monthly_report()
     
     schedule.every().day.at("10:00").do(check_and_run_monthly)
     
-    print("成本监控服务已启动")
-    print("- 每天 09:00 执行日常成本检查")
-    print("- 每月 1号 10:00 生成月度报告")
-    print("按 Ctrl+C 停止服务")
+    print("Cost monitoring service started")
+    print("- Daily cost check at 09:00")
+    print("- Monthly report generation on 1st at 10:00")
+    print("Press Ctrl+C to stop the service")
     
     try:
         while True:
             schedule.run_pending()
-            time.sleep(60)  # 每分钟检查一次是否有待执行的任务
+            time.sleep(60)  # Check every minute for pending tasks
     except KeyboardInterrupt:
-        print("\n服务已停止")
+        print("\nService stopped")
 
 
 if __name__ == "__main__":
     import sys
     
-    # 验证配置
+    # Validate configuration
     try:
         config.Config.validate()
     except ValueError as e:
-        print(f"配置错误: {e}")
-        print("请检查 .env 文件中的配置项")
+        print(f"Configuration error: {e}")
+        print("Please check the configuration items in .env file")
         sys.exit(1)
     
-    # 根据命令行参数决定运行模式
+    # Determine run mode based on command line arguments
     if len(sys.argv) > 1:
         if sys.argv[1] == "--once":
-            # 立即运行一次日常检查（用于测试）
+            # Run daily check once immediately (for testing)
             run_once()
         elif sys.argv[1] == "--monthly":
-            # 立即生成月度报告（用于测试）
+            # Generate monthly report immediately (for testing)
             check_monthly_report()
         else:
-            print("用法:")
-            print("  python main.py          # 按计划运行（每天检查 + 每月报告）")
-            print("  python main.py --once   # 立即执行一次日常检查")
-            print("  python main.py --monthly # 立即生成月度报告")
+            print("Usage:")
+            print("  python main.py          # Run on schedule (daily check + monthly report)")
+            print("  python main.py --once   # Execute daily check once immediately")
+            print("  python main.py --monthly # Generate monthly report immediately")
     else:
-        # 按计划运行
+        # Run on schedule
         run_scheduled()
-

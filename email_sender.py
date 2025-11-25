@@ -23,24 +23,24 @@ class EmailSender:
         
         subject = f"Azure Cost Alert - {yesterday} Cost Exceeded Threshold"
         
-        # 构建邮件正文
+        # Build email body
         html_body = self._build_email_body(total_cost, threshold, top_resources, yesterday)
         text_body = self._build_text_body(total_cost, threshold, top_resources, yesterday)
         
-        # 创建邮件
+        # Create email
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = self.username
         msg['To'] = self.to_email
         
-        # 添加文本和HTML版本
+        # Add text and HTML versions
         part1 = MIMEText(text_body, 'plain', 'utf-8')
         part2 = MIMEText(html_body, 'html', 'utf-8')
         
         msg.attach(part1)
         msg.attach(part2)
         
-        # 发送邮件
+        # Send email
         try:
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
