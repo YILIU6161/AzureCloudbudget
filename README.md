@@ -22,7 +22,7 @@ This is an automated Azure subscription cost monitoring program that sends email
 ### 1. Clone or download the project
 
 ```bash
-cd /Users/liuyi/Cursortest
+cd /path/to/your/project
 ```
 
 ### 2. Install dependencies
@@ -133,8 +133,8 @@ For production environments, it's recommended to use system cron (Linux/Mac) or 
 crontab -e
 
 # Add the following lines (daily check at 9 AM, monthly report on 1st at 10 AM)
-0 9 * * * cd /Users/liuyi/Cursortest && /usr/bin/python3 main.py --once
-0 10 1 * * cd /Users/liuyi/Cursortest && /usr/bin/python3 main.py --monthly
+0 9 * * * cd /path/to/your/project && /usr/bin/python3 main.py --once
+0 10 1 * * cd /path/to/your/project && /usr/bin/python3 main.py --monthly
 ```
 
 #### Windows (Task Scheduler)
